@@ -1,0 +1,133 @@
+/* =========================================================
+   COLOUR PALETTES  (import AFTER theme.css and Site.css)
+   Pick one in the header, or change the default in App.jsx.
+   To add a palette: copy a block below and change the values.
+========================================================= */
+
+:root { --pal-b1: #6ee7b7; --pal-b2: #5eead4; --pal-glow: 5, 150, 105; }
+
+/* shared overrides for colours that were hard-coded */
+.blob.b1 { background: var(--pal-b1); }
+.blob.b2 { background: var(--pal-b2); }
+.btn.light { color: var(--akr-primary-dark); }
+.mock::before { box-shadow: 0 30px 70px -30px rgba(var(--pal-glow), .45); }
+
+/* palette switcher */
+.swatches { display: flex; gap: 6px; align-items: center; margin-right: 4px; }
+.sw { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid var(--akr-surface); background: var(--c); cursor: pointer; box-shadow: 0 0 0 1px var(--akr-border-strong); transition: .2s; }
+.sw:hover { transform: scale(1.15); }
+.sw.on { box-shadow: 0 0 0 2px var(--akr-primary); }
+@media (max-width: 600px) { .swatches { display: none; } }
+
+/* ---------- emerald ---------- */
+[data-palette="emerald"] {
+  --akr-primary: #059669; --akr-primary-dark: #047857; --akr-primary-soft: #ecfdf5;
+  --akr-grad: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  --akr-surface-soft: #f3faf6;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(5,150,105, .4);
+  --pal-b1: #6ee7b7; --pal-b2: #5eead4; --pal-glow: 5,150,105;
+}
+[data-theme="dark"][data-palette="emerald"] {
+  --akr-primary: #34d399; --akr-primary-dark: #10b981; --akr-primary-soft: rgba(52,211,153, .16);
+  --akr-surface-soft: #0b0f1d;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+}
+
+/* ---------- ocean ---------- */
+[data-palette="ocean"] {
+  --akr-primary: #2563eb; --akr-primary-dark: #1d4ed8; --akr-primary-soft: #eff6ff;
+  --akr-grad: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  --akr-surface-soft: #f3f7ff;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(37,99,235, .4);
+  --pal-b1: #93c5fd; --pal-b2: #67e8f9; --pal-glow: 37,99,235;
+}
+[data-theme="dark"][data-palette="ocean"] {
+  --akr-primary: #60a5fa; --akr-primary-dark: #3b82f6; --akr-primary-soft: rgba(96,165,250, .16);
+  --akr-surface-soft: #0b0f1d;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+}
+
+/* ---------- sunset ---------- */
+[data-palette="sunset"] {
+  --akr-primary: #ea580c; --akr-primary-dark: #c2410c; --akr-primary-soft: #fff7ed;
+  --akr-grad: linear-gradient(135deg, #f97316 0%, #e11d48 100%);
+  --akr-surface-soft: #fff8f2;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(234,88,12, .4);
+  --pal-b1: #fdba74; --pal-b2: #fda4af; --pal-glow: 234,88,12;
+}
+[data-theme="dark"][data-palette="sunset"] {
+  --akr-primary: #fb923c; --akr-primary-dark: #f97316; --akr-primary-soft: rgba(251,146,60, .16);
+  --akr-surface-soft: #0b0f1d;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+}
+
+/* ---------- rose ---------- */
+[data-palette="rose"] {
+  --akr-primary: #e11d48; --akr-primary-dark: #be123c; --akr-primary-soft: #fff1f2;
+  --akr-grad: linear-gradient(135deg, #f43f5e 0%, #a855f7 100%);
+  --akr-surface-soft: #fff5f7;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(225,29,72, .4);
+  --pal-b1: #fda4af; --pal-b2: #d8b4fe; --pal-glow: 225,29,72;
+}
+[data-theme="dark"][data-palette="rose"] {
+  --akr-primary: #fb7185; --akr-primary-dark: #f43f5e; --akr-primary-soft: rgba(251,113,133, .16);
+  --akr-surface-soft: #0b0f1d;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+}
+
+/* ---------- indigo ---------- */
+[data-palette="indigo"] {
+  --akr-primary: #6366f1; --akr-primary-dark: #4f46e5; --akr-primary-soft: #eef2ff;
+  --akr-grad: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  --akr-surface-soft: #f6f7fb;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(79,70,229, .4);
+  --pal-b1: #818cf8; --pal-b2: #f0abfc; --pal-glow: 79,70,229;
+}
+[data-theme="dark"][data-palette="indigo"] {
+  --akr-primary: #818cf8; --akr-primary-dark: #6366f1; --akr-primary-soft: rgba(129,140,248, .16);
+  --akr-surface-soft: #0b0f1d;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+}
+
+/* =========================================================
+   MINAS  -  navy / sun-yellow / periwinkle / off-white
+   Azul Brant #011e60 · Sol de Minas #f7b700
+   Horizonte Claro #6a7fc0 · Nuvem #f2f1ef
+========================================================= */
+[data-palette="minas"] {
+  --akr-primary: #061f60; --akr-primary-dark: #031440; --akr-primary-soft: #e6eaf6;
+  --akr-grad: linear-gradient(135deg, #061f60 0%, #2f4a9c 100%);
+  --akr-text: #0a1636; --akr-text-soft: #36415f; --akr-text-muted: #636d8c;
+  --akr-surface: #ffffff; --akr-surface-soft: #f2f1ef;
+  --akr-border: #e3e1dd; --akr-border-strong: #cac7c1;
+  --akr-shadow-lg: 0 18px 40px -18px rgba(6, 31, 96, .38);
+  --nav-bg: rgba(242, 241, 239, .82);
+  --pal-b1: #6a7fc0; --pal-b2: #f7b700; --pal-glow: 6, 31, 96;
+}
+[data-theme="dark"][data-palette="minas"] {
+  --akr-primary: #6a7fc0; --akr-primary-dark: #4a63b8; --akr-primary-soft: rgba(106, 127, 192, .18);
+  --akr-grad: linear-gradient(135deg, #3d57ad 0%, #6a7fc0 100%);
+  --akr-text: #f2f1ef; --akr-text-soft: #c9cee6; --akr-text-muted: #98a3cc;
+  --akr-surface: #0a1f56; --akr-surface-soft: #02123a;
+  --akr-border: #1d3274; --akr-border-strong: #2c4592;
+  --akr-shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .7);
+  --nav-bg: rgba(2, 18, 58, .78);
+}
+
+/* yellow is used as a highlight (always with navy text, never white text) */
+[data-palette="minas"] .hero h1 span {
+  background: linear-gradient(transparent 62%, #f7b700 62%);
+  -webkit-background-clip: border-box; background-clip: border-box;
+  color: var(--akr-primary); padding: 0 .08em;
+}
+[data-palette="minas"] .step-head b { background: #f7b700; color: #061f60; }
+[data-palette="minas"] .btn.light { background: #f7b700; border-color: #f7b700; color: #061f60; }
+[data-palette="minas"] .btn.light:hover { filter: brightness(1.06); }
+[data-palette="minas"] .pill { border-color: #f7b700; }
+[data-palette="minas"] .feat:hover { border-color: #f7b700; }
+[data-palette="minas"] .faq summary::after { color: #d99f00; }
+
+[data-theme="dark"][data-palette="minas"] .hero h1 span { background: none; color: #f7b700; }
+[data-theme="dark"][data-palette="minas"] .stats b,
+[data-theme="dark"][data-palette="minas"] .how .num { background: none; -webkit-text-fill-color: #f7b700; color: #f7b700; }
+[data-theme="dark"][data-palette="minas"] .faq summary::after { color: #f7b700; }
