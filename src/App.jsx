@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AadhaarCardPrinter from "./components/AadhaarCardPrinter";
 import "./Site.css";
-import "./palettes.css";
+import "./Palettes.css";
 
 // [name, swatch colour] - the first one is the default palette
 const PALETTES = [
