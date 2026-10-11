@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import "./PasswordModal.css";
+import "./Passwordmodal.css";
 import "./AadhaarCardPrinter.css";
 import "./theme.css";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
