@@ -4,11 +4,9 @@ import "./Passwordmodal.css";
 import "./AadhaarCardPrinter.css";
 import "./theme.css";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import {
-  detectContentBox,
-  defaultBoxes,
-  applyDrag,
-} from "./idCardGeometry";
+import { detectContentBox, applyDrag } from "./idCardGeometry";
+import { detectLayout, DOC_TYPES } from "./idCardDetect";
+import "./idCardPdf"
 
 import {
   DEFAULT_ADJUST,
@@ -20,6 +18,7 @@ import {
 
 // The Word builder (and the `docx` package) loads only on download.
 const loadDocxBuilder = () => import("./idCardDocx");
+const loadPdfBuilder = () => import("./idCardPdf");
 
 const MAX_IMAGE_SIDE = 4200;
 const PDF_TARGET_WIDTH = 2400;
@@ -88,8 +87,8 @@ const Icon = ({ name, size = 15 }) => (
 );
 
 // find the person's photo on a front card (page coordinates)
-const findPhotoBox = (source, frontBox) => {
-  const rect = detectPhotoRect(cropCanvas(source, frontBox));
+const findPhotoBox = (source, frontBox, type = "aadhaar") => {
+  const rect = detectPhotoRect(cropCanvas(source, frontBox), type);
 
   return {
     x: frontBox.x + rect.x * frontBox.w,
@@ -142,6 +141,49 @@ const cropCanvas = (source, box) => {
   ctx.drawImage(source, sx, sy, sw, sh, 0, 0, sw, sh);
 
   return out;
+};
+
+const DOC_NAME = {
+  aadhaar: "Aadhaar",
+  pan: "e-PAN",
+  voter: "Voter ID",
+  cards: "2 cards found",
+};
+
+// Find the front / back card (and the photo) on a full page.
+// type = "auto" | "aadhaar" | "pan" | "voter"
+const analyzePage = (canvas, type) => {
+  const longest = Math.max(canvas.width, canvas.height);
+  const ratio = longest > 900 ? 900 / longest : 1;
+  const small = document.createElement("canvas");
+  small.width = Math.max(1, Math.round(canvas.width * ratio));
+  small.height = Math.max(1, Math.round(canvas.height * ratio));
+
+  const ctx = small.getContext("2d");
+  ctx.drawImage(canvas, 0, 0, small.width, small.height);
+
+  const pixels = ctx.getImageData(0, 0, small.width, small.height);
+  const content = detectContentBox(pixels.data, small.width, small.height);
+  const layout = detectLayout(
+    pixels.data,
+    small.width,
+    small.height,
+    content,
+    type
+  );
+
+  const found = { front: layout.front, back: layout.back };
+  found.photo = findPhotoBox(
+    canvas,
+    found.front,
+    layout.type === "cards"
+      ? "auto"
+      : layout.variant === "panel"
+      ? "pan2"
+      : layout.type
+  );
+
+  return { found, kind: layout.type };
 };
 
 // ------------------------------------------------------------
@@ -259,6 +301,43 @@ const rotateCanvas = (canvas) => {
   return rotated;
 };
 
+// JPEG bytes for the PDF (white behind any transparent pixel)
+const canvasToJpeg = (canvas) =>
+  new Promise((resolve, reject) => {
+    const flat = document.createElement("canvas");
+    flat.width = canvas.width;
+    flat.height = canvas.height;
+
+    const ctx = flat.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, flat.width, flat.height);
+    ctx.drawImage(canvas, 0, 0);
+
+    flat.toBlob(
+      async (blob) => {
+        if (!blob) {
+          reject(new Error("Could not read the cropped card."));
+          return;
+        }
+
+        resolve(new Uint8Array(await blob.arrayBuffer()));
+      },
+      "image/jpeg",
+      0.95
+    );
+  });
+
+const saveBlob = (blob, name) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+
 const canvasToPng = (canvas) =>
   new Promise((resolve, reject) => {
     canvas.toBlob(async (blob) => {
@@ -359,7 +438,10 @@ export default function AadhaarCardPrinter() {
   const [layout, setLayout] = useState("stacked");
   const [scale, setScale] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [dlMenu, setDlMenu] = useState(false); // PDF / Word chooser
   const [dragOver, setDragOver] = useState(false);
+  const [docType, setDocType] = useState("auto"); // auto | aadhaar | pan | voter
+  const [detected, setDetected] = useState(""); // what "auto" found
 
   // free the preview image when it is replaced / on leave
   useEffect(
@@ -545,25 +627,10 @@ export default function AadhaarCardPrinter() {
         ? await readPdfFile(file)
         : await readImageFile(file);
 
-      // look for the letter on a small copy of the page (fast)
-      const longest = Math.max(canvas.width, canvas.height);
-      const ratio = longest > 900 ? 900 / longest : 1;
-      const small = document.createElement("canvas");
-      small.width = Math.max(1, Math.round(canvas.width * ratio));
-      small.height = Math.max(1, Math.round(canvas.height * ratio));
-
-      const smallCtx = small.getContext("2d");
-      smallCtx.drawImage(canvas, 0, 0, small.width, small.height);
-
-      const pixels = smallCtx.getImageData(0, 0, small.width, small.height);
-      const content = detectContentBox(
-        pixels.data,
-        small.width,
-        small.height
-      );
-
-      const found = defaultBoxes(content);
-      found.photo = findPhotoBox(canvas, found.front);
+      // find the cards (Aadhaar letter / e-PAN / e-Voter) on the page
+      const { found, kind } = analyzePage(canvas, "auto");
+      setDocType("auto");
+      setDetected(kind);
 
       const previewBlob = await new Promise((resolve) =>
         canvas.toBlob(resolve, "image/jpeg", 0.9)
@@ -615,8 +682,37 @@ export default function AadhaarCardPrinter() {
     setFileName("");
     setStatus("idle");
     setError("");
+    setDocType("auto");
+    setDetected("");
 
     if (inputRef.current) inputRef.current.value = "";
+  };
+
+  // person picked another document type -> find the cards again
+  const changeDocType = (next) => {
+    const canvas = sourceRef.current;
+    if (!canvas) return;
+
+    const { found, kind } = analyzePage(canvas, next);
+
+    setDocType(next);
+    setDetected(kind);
+    defaultsRef.current = found;
+
+    setAdjust(
+      AUTO_ENHANCE_ON_UPLOAD
+        ? {
+            front: autoAdjust(cropCanvas(canvas, found.front)),
+            back: autoAdjust(cropCanvas(canvas, found.back)),
+          }
+        : NO_ADJUST
+    );
+    setPhotoAdjust(
+      AUTO_ENHANCE_ON_UPLOAD
+        ? autoPhotoAdjust(cropCanvas(canvas, found.photo))
+        : DEFAULT_ADJUST
+    );
+    setBoxes(found);
   };
 
   // ----------------------------------------------------------
@@ -640,7 +736,8 @@ export default function AadhaarCardPrinter() {
   // store a page canvas for one side, with its preview + default crop
   const prepareSeparate = async (which, canvas, name) => {
     const box = detectCardBox(canvas);
-    const photoBox = which === "front" ? findPhotoBox(canvas, box) : null;
+    const photoBox =
+      which === "front" ? findPhotoBox(canvas, box, "auto") : null;
 
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/jpeg", 0.9)
@@ -822,9 +919,11 @@ export default function AadhaarCardPrinter() {
   };
 
   // ----------------------------------------------------------
-  // Download DOCX
+  // Download  (format = "pdf" | "docx")
   // ----------------------------------------------------------
-  const handleDownload = async () => {
+  const handleDownload = async (format) => {
+    setDlMenu(false);
+
     const frontCanvas = frontCanvasRef.current;
     const backCanvas = backCanvasRef.current;
 
@@ -838,50 +937,90 @@ export default function AadhaarCardPrinter() {
     setBusy(true);
     setError("");
 
+    const options = {
+      layout,
+      scale: layout === "side" ? 1 : scale,
+    };
+
     try {
-      const [{ Packer }, { buildIdCardDocument }] = await Promise.all([
-        import("docx"),
-        loadDocxBuilder(),
-      ]);
+      if (format === "pdf") {
+        const [{ buildIdCardPdf }, frontData, backData] = await Promise.all([
+          loadPdfBuilder(),
+          canvasToJpeg(frontCanvas),
+          canvasToJpeg(backCanvas),
+        ]);
 
-      const [frontData, backData] = await Promise.all([
-        canvasToPng(frontCanvas),
-        canvasToPng(backCanvas),
-      ]);
+        const blob = buildIdCardPdf({
+          front: {
+            data: frontData,
+            width: frontCanvas.width,
+            height: frontCanvas.height,
+          },
+          back: {
+            data: backData,
+            width: backCanvas.width,
+            height: backCanvas.height,
+          },
+          ...options,
+        });
 
-      const doc = buildIdCardDocument({
-        front: {
-          data: frontData,
-          width: frontCanvas.width,
-          height: frontCanvas.height,
-        },
-        back: {
-          data: backData,
-          width: backCanvas.width,
-          height: backCanvas.height,
-        },
-        layout,
-        scale: layout === "side" ? 1 : scale,
-      });
+        saveBlob(blob, "id-card-front-back.pdf");
+      } else {
+        const [{ Packer }, { buildIdCardDocument }] = await Promise.all([
+          import("docx"),
+          loadDocxBuilder(),
+        ]);
 
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
+        const [frontData, backData] = await Promise.all([
+          canvasToPng(frontCanvas),
+          canvasToPng(backCanvas),
+        ]);
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "id-card-front-back.docx";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+        const doc = buildIdCardDocument({
+          front: {
+            data: frontData,
+            width: frontCanvas.width,
+            height: frontCanvas.height,
+          },
+          back: {
+            data: backData,
+            width: backCanvas.width,
+            height: backCanvas.height,
+          },
+          ...options,
+        });
 
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+        saveBlob(await Packer.toBlob(doc), "id-card-front-back.docx");
+      }
     } catch (buildError) {
-      console.error("ID card docx error:", buildError);
-      setError(buildError.message || "Could not create the Word file.");
+      console.error("ID card download error:", buildError);
+      setError(
+        buildError.message ||
+          `Could not create the ${format === "pdf" ? "PDF" : "Word"} file.`
+      );
     } finally {
       setBusy(false);
     }
   };
+
+  // close the PDF / Word chooser on outside click or Esc
+  useEffect(() => {
+    if (!dlMenu) return undefined;
+
+    const onDown = (event) => {
+      if (!event.target.closest?.(".idc-dl")) setDlMenu(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setDlMenu(false);
+    };
+
+    document.addEventListener("pointerdown", onDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [dlMenu]);
 
   const percent = (value) => `${(value * 100).toFixed(3)}%`;
 
@@ -1308,15 +1447,40 @@ export default function AadhaarCardPrinter() {
         </div>
 
         <div className={`idc-actions${tool === "letter" ? " two" : ""}`}>
-          <button
-            type="button"
-            className="idc-download"
-            onClick={handleDownload}
-            disabled={busy || !canDownload}
-          >
-            <Icon name="download" size={17} />
-            {busy ? "Creating file..." : "Download DOCX (A4)"}
-          </button>
+          <div className="idc-dl">
+            <button
+              type="button"
+              className="idc-download"
+              onClick={() => setDlMenu((open) => !open)}
+              disabled={busy || !canDownload}
+              aria-haspopup="menu"
+              aria-expanded={dlMenu}
+            >
+              <Icon name="download" size={17} />
+              {busy ? "Creating file..." : "Download (A4)"}
+            </button>
+
+            {dlMenu && (
+              <div className="idc-dl-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleDownload("pdf")}
+                >
+                  <strong>PDF</strong>
+                  <span>Best for printing, opens anywhere</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleDownload("docx")}
+                >
+                  <strong>Word (.docx)</strong>
+                  <span>Editable, move the cards if needed</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {tool === "letter" && (
             <button
@@ -1673,6 +1837,24 @@ export default function AadhaarCardPrinter() {
                   >
                     Reset
                   </button>
+                </div>
+
+                <div className="idc-types" role="group" aria-label="Document type">
+                  <span className="idc-types-label">Document</span>
+                  {DOC_TYPES.map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`idc-type${docType === key ? " on" : ""}`}
+                      aria-pressed={docType === key}
+                      onClick={() => changeDocType(key)}
+                    >
+                      {label}
+                      {key === "auto" && docType === "auto" && detected
+                        ? ` · ${DOC_NAME[detected]}`
+                        : ""}
+                    </button>
+                  ))}
                 </div>
 
                 <div className="idc-stage" ref={stageRef}>

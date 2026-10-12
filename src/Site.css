@@ -469,7 +469,7 @@ tr:last-child td {
 
 .foot-grid {
     display: grid;
-    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    grid-template-columns: 1.6fr 1fr 1fr;
     gap: 28px;
 }
 
@@ -975,5 +975,103 @@ tr:last-child td {
         padding: 28px 24px;
         text-align: center;
         justify-content: center;
+    }
+}
+
+/* =========================================================
+   HERO v2 - centred layout, step strip, wide mockup
+   (overrides the split hero above)
+========================================================= */
+.hero {
+    text-align: center;
+    padding: 72px 0 56px;
+    background: radial-gradient(800px 360px at 50% 0, var(--akr-primary-soft), transparent 70%);
+}
+
+.hero-center {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-copy p {
+    margin-inline: auto;
+    max-width: 60ch;
+}
+
+.hero h1 {
+    font-size: clamp(2.3rem, 5.4vw, 4rem);
+    max-width: 18ch;
+    margin-inline: auto;
+}
+
+.hero-cta,
+.hero .badges {
+    justify-content: center;
+}
+
+.hero-steps {
+    list-style: none;
+    margin: 34px 0 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+}
+
+.hero-steps li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: .95rem;
+    color: var(--akr-text-soft);
+}
+
+.hero-steps li:not(.sep) {
+    padding: 8px 16px 8px 8px;
+    border-radius: 999px;
+    background: var(--akr-surface);
+    border: 1px solid var(--akr-border);
+    box-shadow: var(--akr-shadow-sm);
+}
+
+.hero-steps b {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--akr-primary);
+    color: #fff;
+    font-size: .8rem;
+}
+
+.hero-steps .sep {
+    color: var(--akr-primary);
+    font-weight: 700;
+}
+
+.hero .mock {
+    width: 100%;
+    max-width: 760px;
+    margin-top: 40px;
+    min-height: 300px;
+}
+
+.hero .badges {
+    margin-top: 32px;
+}
+
+@media (max-width: 860px) {
+    .hero .mock {
+        transform: none;
+    }
+
+    .hero-steps .sep {
+        display: none;
     }
 }

@@ -3,16 +3,8 @@ import AadhaarCardPrinter from "./components/AadhaarCardPrinter";
 import "./Site.css";
 import "./Palettes.css";
 
-// [name, swatch colour] - the first one is the default palette
-const PALETTES = [
-  ["minas", "#061f60"],
-  ["emerald", "#059669"],
-  ["indigo", "#6366f1"],
-  ["ocean", "#2563eb"],
-  ["sunset", "#ea580c"],
-  ["rose", "#e11d48"],
-  ["rose", "#F7B700"],
-];
+// Fixed colour palette (switcher removed)
+const PALETTE = "minas";
 
 const LINKS = [
   ["Tool", "#tool"],
@@ -60,27 +52,13 @@ export default function App() {
     window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light"
   );
 
-  const [palette, setPalette] = useState(() => {
-    try {
-      const saved = localStorage.getItem("palette-v2");
-      return PALETTES.some(([n]) => n === saved) ? saved : PALETTES[0][0];
-    } catch {
-      return PALETTES[0][0];
-    }
-  });
-
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
   useEffect(() => {
-    document.documentElement.dataset.palette = palette;
-    try {
-      localStorage.setItem("palette-v2", palette);
-    } catch {
-      // storage can be blocked - ignore
-    }
-  }, [palette]);
+    document.documentElement.dataset.palette = PALETTE;
+  }, []);
 
   useEffect(() => {
     const els = document.querySelectorAll(".feat, .how, .faq details, .table-wrap, .step-card, .cta-banner");
@@ -107,13 +85,6 @@ export default function App() {
           </nav>
           <div className="nav-right">
             <a className="btn primary sm" href="#tool">Choose File</a>
-            <div className="swatches" role="group" aria-label="Colour palette">
-              {PALETTES.map(([n, c]) => (
-                <button key={n} type="button" title={n} aria-label={`${n} palette`}
-                  className={`sw ${palette === n ? "on" : ""}`} style={{ "--c": c }}
-                  onClick={() => setPalette(n)} />
-              ))}
-            </div>
             <button className="icon-btn" aria-label="Toggle theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? "☀️" : "🌙"}
@@ -128,7 +99,7 @@ export default function App() {
       <main id="top">
         <section className="hero">
           <div className="blob b1" /><div className="blob b2" />
-          <div className="wrap hero-grid">
+          <div className="wrap hero-center">
             <div className="hero-copy">
               <span className="pill">✨ Free · Private · No sign-up</span>
               <h1>Aadhaar, Voter ID &amp; PAN to <span>Card Size</span> in Seconds</h1>
@@ -138,13 +109,15 @@ export default function App() {
                 <a className="btn big" href="#how">See how it works</a>
               </div>
               <div className="drag-note">Or drag and drop your file in the box below</div>
-              <div className="badges">
-                <span className="badge">🪪 Aadhaar · Voter · PAN</span>
-                <span className="badge">🔒 Processed in your browser</span>
-                <span className="badge">✓ No watermark</span>
-                <span className="badge">📱 Mobile friendly</span>
-              </div>
             </div>
+
+            <ol className="hero-steps">
+              <li><b>1</b> Upload PDF or image</li>
+              <li className="sep" aria-hidden>→</li>
+              <li><b>2</b> Auto split &amp; enhance</li>
+              <li className="sep" aria-hidden>→</li>
+              <li><b>3</b> Print on A4</li>
+            </ol>
 
             <div className="mock" aria-hidden>
               <div className="mock-pdf">
@@ -160,6 +133,13 @@ export default function App() {
               <span className="chip c1">🔒 On-device</span>
               <span className="chip c2">✓ A4 ready</span>
               <span className="chip c3">⚡ Instant</span>
+            </div>
+
+            <div className="badges">
+              <span className="badge">🪪 Aadhaar · Voter · PAN</span>
+              <span className="badge">🔒 Processed in your browser</span>
+              <span className="badge">✓ No watermark</span>
+              <span className="badge">📱 Mobile friendly</span>
             </div>
           </div>
         </section>
@@ -290,7 +270,6 @@ export default function App() {
               <h4>Help</h4>
               {LINKS.slice(3).map(([l, h]) => <a className="fl" key={h} href={h}>{l}</a>)}
             </div>
-
           </div>
           <div className="copy">© {new Date().getFullYear()} ID Card Print. All rights reserved.</div>
         </div>
