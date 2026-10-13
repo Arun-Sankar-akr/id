@@ -1,9 +1,3 @@
-// ============================================================
-// ID CARD PRINT  -  PDF builder (no imports, no extra package)
-// Same A4 layout as the Word file: front + back at real card size.
-// front / back = { data: Uint8Array (JPEG), width, height }  (pixels)
-// ============================================================
-
 const CARD_WIDTH_MM = 85.6;
 const A4_W_MM = 210;
 const A4_H_MM = 297;
@@ -54,8 +48,8 @@ export function buildIdCardPdf({ front, back, layout = "stacked", scale = 1 }) {
   const image = (card) => [
     text(
       `<< /Type /XObject /Subtype /Image /Width ${card.width} /Height ${card.height} ` +
-      `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode ` +
-      `/Length ${card.data.length} >>\nstream\n`
+        `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode ` +
+        `/Length ${card.data.length} >>\nstream\n`
     ),
     card.data,
     text("\nendstream"),
@@ -67,7 +61,7 @@ export function buildIdCardPdf({ front, back, layout = "stacked", scale = 1 }) {
     [
       text(
         `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] ` +
-        `/Resources << /XObject << /Im1 5 0 R /Im2 6 0 R >> >> /Contents 4 0 R >>`
+          `/Resources << /XObject << /Im1 5 0 R /Im2 6 0 R >> >> /Contents 4 0 R >>`
       ),
     ],
     [text(`<< /Length ${content.length} >>\nstream\n${content}endstream`)],
