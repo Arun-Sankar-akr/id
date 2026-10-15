@@ -85,10 +85,6 @@ export default function App() {
           </nav>
           <div className="nav-right">
             <a className="btn primary sm" href="#tool">Choose File</a>
-            <button className="icon-btn" aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
             <button className="icon-btn burger" aria-label="Menu" onClick={() => setOpen(!open)}>
               {open ? "✕" : "☰"}
             </button>
